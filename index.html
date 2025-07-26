@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contador Romântico com Música Spotify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+  <main class="container" role="main" aria-label="Contador romântico com fotos e música Spotify">
+
+    <section aria-labelledby="music-title" style="margin-top: 64px;">
+        <div class="music-container" aria-label="Player Spotify incorporado" id="spotify-embed-container">
+          <iframe
+            class="spotify-embed"
+            src="https://open.spotify.com/intl-pt/track/55ABgGWbkvN9f7VBwt5lXh"
+            allow="encrypted-media"
+            allowtransparency="true"
+            loading="lazy"
+            title="Spotify music player"
+            aria-live="off"
+          ></iframe>
+        </div>
+      </section>
+
+      <section>
+        <div>
+            <h1 class="fds">"Oiii meu bem, meio repentino mas só queria pedir desculpas pelas coisas recentes e também lhe falar que te amo muito, obrigado por todos os nossos momentos e por ser uma namorada tão incrível tendo tanta paciência e amor cmg, sou o homem mais abençoado por te ter meu bem, eu te amo muito.
+Seu benzinho"
+            </h1>
+        </div>
+      </section>
+
+    <section aria-labelledby="countdown-title">
+      <h1 id="countdown-title" tabindex="0">Contador desde 01/09/2024 15:00</h1>
+      <div class="countdown" role="list" aria-live="polite" aria-atomic="true">
+        <div class="countdown-section" role="listitem" tabindex="0" aria-label="Anos decorridos">
+          <div id="years">0</div>
+          <span>Anos</span>
+        </div>
+        <div class="countdown-section" role="listitem" tabindex="0" aria-label="Dias decorridos">
+          <div id="days">0</div>
+          <span>Dias</span>
+        </div>
+        <div class="countdown-section" role="listitem" tabindex="0" aria-label="Horas decorridas">
+          <div id="hours">0</div>
+          <span>Horas</span>
+        </div>
+        <div class="countdown-section" role="listitem" tabindex="0" aria-label="Minutos decorridos">
+          <div id="minutes">0</div>
+          <span>Minutos</span>
+        </div>
+        <div class="countdown-section" role="listitem" tabindex="0" aria-label="Segundos decorridos">
+          <div id="seconds">0</div>
+          <span>Segundos</span>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="photos-title" class="photos-section" style="margin-top: 64px;">
+      <h2 id="photos-title" tabindex="0">Nossos Momentos</h2>
+      <div class="photos-container" id="photos-container" aria-live="polite" aria-atomic="true">
+        <!-- Photo cards inserted by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Image Modal for full-size photo view -->
+  <div id="image-modal" aria-hidden="true" role="dialog" aria-label="Visualizador de imagem">
+    <div id="modal-backdrop" tabindex="-1"></div>
+    <div id="modal-content">
+      <button id="modal-close-btn" aria-label="Fechar imagem" title="Fechar imagem">&#x2715;</button>
+      <img id="modal-image" src="" alt="" />
+      <p id="modal-caption"></p>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      // Initial base date: 01/09/2024 15:00:00 local time (Brazil timezone presumed)
+      // We'll treat it as local time on client side.
+      const baseDate = new Date(2024, 8, 22, 0, 0, 0); // Month is 0-based: 8 = September
+
+      const yearsElem = document.getElementById('years');
+      const daysElem = document.getElementById('days');
+      const hoursElem = document.getElementById('hours');
+      const minutesElem = document.getElementById('minutes');
+      const secondsElem = document.getElementById('seconds');
+
+      /**
+       * Calculate time elapsed since baseDate: years, days, hours, minutes, seconds.
+       * - Years counted by full calendar years between baseDate and now
+       * - Days is remaining days after subtracting full years
+       */
+      function calculateElapsedTime() {
+        const now = new Date();
+
+        let years = now.getFullYear() - baseDate.getFullYear();
+
+        // Check if current month/day/time is before base date's month/day/time in the year
+        // If so, subtract one year
+        const baseMonth = baseDate.getMonth();
+        const baseDay = baseDate.getDate();
+        const baseHours = baseDate.getHours();
+        const baseMinutes = baseDate.getMinutes();
+        const baseSeconds = baseDate.getSeconds();
+
+        if (
+          now.getMonth() < baseMonth ||
+          (now.getMonth() === baseMonth && now.getDate() < baseDay) ||
+          (now.getMonth() === baseMonth && now.getDate() === baseDay && now.getHours() < baseHours) ||
+          (now.getMonth() === baseMonth && now.getDate() === baseDay && now.getHours() === baseHours && now.getMinutes() < baseMinutes) ||
+          (now.getMonth() === baseMonth && now.getDate() === baseDay && now.getHours() === baseHours && now.getMinutes() === baseMinutes && now.getSeconds() < baseSeconds)
+        ) {
+          years--;
+        }
+
+        // Calculate the date after adding 'years' to baseDate
+        const lastAnniversary = new Date(baseDate.getTime());
+        lastAnniversary.setFullYear(baseDate.getFullYear() + years);
+
+        let deltaMs = now - lastAnniversary;
+        if (deltaMs < 0) deltaMs = 0;
+
+        // Calculate days, hours, minutes, seconds from deltaMs
+        const msInSecond = 1000;
+        const msInMinute = msInSecond * 60;
+        const msInHour = msInMinute * 60;
+        const msInDay = msInHour * 24;
+
+        const days = Math.floor(deltaMs / msInDay);
+        deltaMs -= days * msInDay;
+
+        const hours = Math.floor(deltaMs / msInHour);
+        deltaMs -= hours * msInHour;
+
+        const minutes = Math.floor(deltaMs / msInMinute);
+        deltaMs -= minutes * msInMinute;
+
+        const seconds = Math.floor(deltaMs / msInSecond);
+
+        return { years, days, hours, minutes, seconds };
+      }
+
+      function updateCountdown() {
+        const { years, days, hours, minutes, seconds } = calculateElapsedTime();
+        yearsElem.textContent = years;
+        daysElem.textContent = days;
+        hoursElem.textContent = hours.toString().padStart(2, '0');
+        minutesElem.textContent = minutes.toString().padStart(2, '0');
+        secondsElem.textContent = seconds.toString().padStart(2, '0');
+      }
+
+      // Initialize countdown update
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+
+      // Photos section handling
+      const photosContainer = document.getElementById('photos-container');
+
+      // Default romantic photos placeholders with descriptive alt
+      const defaultPhotos = [
+        {
+          url:'./imgs/noddy01.png',
+        
+        },
+        {
+          url:'./imgs/noddy02.png',
+         
+        },
+        {
+          url:'./imgs/noddy04.png',
+         
+        },
+        {
+          url:'./imgs/noddy05.png',
+         
+        },
+        {
+          url:'./imgs/noddy06.png',
+          
+        }
+      ];
+
+      // Render photos given an array of {url, alt}
+      function renderPhotos(photos) {
+        photosContainer.innerHTML = '';
+        photos.forEach(({url, alt}, index) => {
+          const figure = document.createElement('figure');
+          figure.className = 'photo-card';
+          figure.tabIndex = 0;
+
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = alt;
+          img.loading = 'lazy';
+          img.onerror = () => {
+            img.src = 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/80006393-ed2d-44db-b7c2-c604d3c124f3.png';
+            img.alt = 'Imagem indisponível';
+          };
+
+          const caption = document.createElement('figcaption');
+          caption.textContent = ` ${index + 1}`;
+
+          figure.appendChild(img);
+          figure.appendChild(caption);
+          photosContainer.appendChild(figure);
+        });
+      }
+
+      // Initial render with defaults
+      renderPhotos(defaultPhotos);
+
+      // Spotify embed container and iframe
+      const spotifyContainer = document.getElementById('spotify-embed-container');
+      const customizationForm = document.getElementById('customization-form');
+      const spotifyIframeSelector = '.spotify-embed';
+
+      customizationForm?.addEventListener('submit', e => {
+        e.preventDefault();
+        // Gather inputs
+        const photoUrls = [
+          document.getElementById('photo1-url').value.trim(),
+          document.getElementById('photo2-url').value.trim(),
+          document.getElementById('photo3-url').value.trim()
+        ];
+
+        // Filter valid URLs or fall back to default
+        const newPhotos = photoUrls.map((url, i) => {
+          if (url && isValidHttpUrl(url)) {
+            return { url, alt: `Foto Romântica ${i + 1} personalizada` };
+          } else {
+            return defaultPhotos[i];
+          }
+        });
+
+        renderPhotos(newPhotos);
+
+        const spotifyUrlInput = document.getElementById('spotify-embed-url').value.trim();
+
+        if (spotifyUrlInput && isValidHttpUrl(spotifyUrlInput)) {
+          // Remove old iframe and insert new spotify iframe with src = url input
+          const existingIframe = spotifyContainer.querySelector(spotifyIframeSelector);
+          if (existingIframe) existingIframe.remove();
+          const iframe = document.createElement('iframe');
+          iframe.className = 'spotify-embed';
+          iframe.src = spotifyUrlInput;
+          iframe.allow = 'encrypted-media';
+          iframe.allowTransparency = true;
+          iframe.loading = 'lazy';
+          iframe.title = 'Spotify music player';
+          spotifyContainer.appendChild(iframe);
+        } else {
+          // Revert to default if invalid or empty
+          const existingIframe = spotifyContainer.querySelector(spotifyIframeSelector);
+          if (existingIframe) existingIframe.remove();
+          const iframe = document.createElement('iframe');
+          iframe.className = 'spotify-embed';
+          iframe.src = 'https://open.spotify.com/embed/track/1jJci4qxiYcOHhQR247rEU'; // default track
+          iframe.allow = 'encrypted-media';
+          iframe.allowTransparency = true;
+          iframe.loading = 'lazy';
+          iframe.title = 'Spotify music player';
+          spotifyContainer.appendChild(iframe);
+        }
+      });
+
+      function isValidHttpUrl(string) {
+        try {
+          let url = new URL(string);
+          return url.protocol === "http:" || url.protocol === "https:";
+        } catch {
+          return false;
+        }
+      }
+
+      // IMAGE MODAL ELEMENTS
+      const modal = document.getElementById('image-modal');
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      const modalContent = document.getElementById('modal-content');
+      const modalImage = document.getElementById('modal-image');
+      const modalCaption = document.getElementById('modal-caption');
+      const modalCloseBtn = document.getElementById('modal-close-btn');
+
+      // Open modal with the clicked image
+      function openImageModal(imgSrc, imgAlt) {
+        modalImage.src = imgSrc;
+        modalImage.alt = imgAlt;
+        modalCaption.textContent = imgAlt || '';
+        modal.setAttribute('aria-hidden', 'false');
+        modal.style.display = 'flex';
+        modalCloseBtn.focus();
+        document.body.style.overflow = 'hidden'; // Prevent body scroll when modal is open
+      }
+
+      // Close the modal function
+      function closeImageModal() {
+        modal.setAttribute('aria-hidden', 'true');
+        modal.style.display = 'none';
+        modalImage.src = '';
+        modalCaption.textContent = '';
+        document.body.style.overflow = ''; // Restore body scroll
+      }
+
+      // Event Listeners
+
+      // Event delegation for photo clicks
+      photosContainer.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target && target.tagName === 'IMG') {
+          openImageModal(target.src, target.alt);
+        }
+      });
+
+      // Close modal when clicking backdrop
+      modalBackdrop.addEventListener('click', closeImageModal);
+
+      // Close modal when clicking close button
+      modalCloseBtn.addEventListener('click', closeImageModal);
+
+      // Close modal on Escape key press
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+          closeImageModal();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
+
